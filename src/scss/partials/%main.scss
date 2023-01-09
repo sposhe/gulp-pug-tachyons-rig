@@ -1,0 +1,34 @@
+:root {
+  %sans-serif;
+}
+body {
+  %bg-white;
+}
+main {
+  %ma3;
+  %ma4-ns;
+  %ma5-l;
+  %pa4;
+  %pa5-ns;
+}
+header {
+  %bb;
+  %pb3;
+  %pb4-l;
+  %mb4;
+  %mb5-l;
+}
+h1 {
+  %f1;
+  %f-subheadline-l;
+  %f-headline-xl;
+  %lh-compressed;
+  %ma0;
+}
+p, code {
+  %f4;
+  %f3-l;
+  %fw3;
+  %measure;
+  %lh-copy;
+}

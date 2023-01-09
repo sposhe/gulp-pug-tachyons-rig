@@ -1,0 +1,33 @@
+extends ../templates/_root
+
+prepend head
+  - const path = '/'
+  - const title = 'Hello World'
+  - const description = 'Example page from the gulp-pug-tachyons-rig template repo.'
+  - const image = '/og.png'
+  - const alt = 'OpenGraph image alternate text.'
+  - const card = 'summary_large_image'
+  
+append json
+  include ../../json/index.min.json
+
+append body
+  
+  main
+    
+    header.home
+      h1 Hello World
+    p This is an example page from the 
+      +externalLink('https://github.com/sposhe/gulp-pug-tachyons-rig') #[code gulp-pug-tachyons-rig]
+      |  template repo.
+    p Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    
+  
+  
+  
+  
+  
+  
+  
+  
+

@@ -1,0 +1,9 @@
+%bg-white#{$s} {
+  background: #ffffff;
+}
+%tracked-close#{$s} {
+  letter-spacing: -0.025em;
+}
+%lh-compressed#{$s} {
+  line-height: 0.92;
+}

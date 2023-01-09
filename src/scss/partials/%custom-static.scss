@@ -1,0 +1,9 @@
+%a {
+  &:hover,
+  &:focus {
+    background: #e3e3ff;
+  }
+  &:focus {
+    outline-offset: 0.1em;
+  }
+}
