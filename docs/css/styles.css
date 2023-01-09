@@ -254,26 +254,6 @@ p, code {
   max-width: 30em;
 }
 
-.sr-only {
-  position: absolute;
-  padding: 0;
-  border-width: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-}
-
-.sr-only-focusable:focus {
-  position: relative;
-  width: auto;
-  height: auto;
-  clip: initial;
-  margin: inherit;
-  border: initial;
-}
-
 body {
   background: #ffffff;
 }
@@ -288,24 +268,6 @@ h1 {
   }
   main {
     margin: 2rem;
-  }
-  .sr-only-ns {
-    position: absolute;
-    padding: 0;
-    border-width: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-  }
-  .sr-only-focusable-ns:focus {
-    position: relative;
-    width: auto;
-    height: auto;
-    clip: initial;
-    margin: inherit;
-    border: initial;
   }
 }
 @media screen and (min-width: 1024px) {
@@ -324,45 +286,9 @@ h1 {
   p, code {
     font-size: 1.5rem;
   }
-  .sr-only-l {
-    position: absolute;
-    padding: 0;
-    border-width: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-  }
-  .sr-only-focusable-l:focus {
-    position: relative;
-    width: auto;
-    height: auto;
-    clip: initial;
-    margin: inherit;
-    border: initial;
-  }
 }
 @media screen and (min-width: 1350px) {
   h1 {
     font-size: 6rem;
-  }
-  .sr-only-xl {
-    position: absolute;
-    padding: 0;
-    border-width: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-  }
-  .sr-only-focusable-xl:focus {
-    position: relative;
-    width: auto;
-    height: auto;
-    clip: initial;
-    margin: inherit;
-    border: initial;
   }
 }

@@ -758,7 +758,6 @@
 
 
 // screenreader
-.sr-only#{$s},
 %sr-only#{$s} {
   position: absolute;
   padding: 0;
@@ -769,7 +768,6 @@
   height: 1px;
   margin: -1px;
 }
-.sr-only-focusable#{$s},
 %sr-only-focusable#{$s} {
   &:focus {
     position: relative;
