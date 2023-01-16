@@ -27,12 +27,6 @@ const sassExtendShorthand = require('gulp-sass-extend-shorthand')
 // helpers
 const paths = (base, folders) => folders.map(folder => base + '/' + folder)
 const date = () => new Date().toISOString().slice(0, 10)
-const popExt = (path) => {
-  let baseArray = path.basename.split('.')
-  path.extname = '.' + baseArray.pop()
-  path.basename = baseArray.join('.')
-  return path
-}
 
 // variables
 const destination = 'docs'
