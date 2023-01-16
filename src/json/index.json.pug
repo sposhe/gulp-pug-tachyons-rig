@@ -1,11 +1,11 @@
 doctype xml
 include ../pug/mixins/_index
 root
-  - const url = 'https://example.com/'
   entity
     at-context http://www.schema.org
     at-type WebPage
-    at-id= url + '#webpage'
+    at-id= root + '#webpage'
     name Hello World
     description Example page from the gulp-pug-tachyons-rig template repo.
-    url= url
+    url= root
+    include accessibility.json.pug
