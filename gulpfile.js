@@ -1,181 +1,290 @@
-// modules
-const fs      = require('fs')
-const bsync   = require('browser-sync').create()
-const webpack = require('webpack-stream')
-const indexer = require('component-indexer')
+import gulp from 'gulp'
+import pugCompiler from 'pug'
+import gulpPug from 'gulp-pug'
+import { dirname } from 'path'
+import * as dartSass from 'sass'
+import gulpSass from 'gulp-sass'
+import rename from 'gulp-rename'
+import { Transform } from 'stream'
+import * as esbuild from 'esbuild'
+import browserSync from 'browser-sync'
+import urlBuilder from 'gulp-url-builder'
+import { XMLParser } from 'fast-xml-parser'
+import sassExtendShorthand from 'gulp-sass-extend-shorthand'
+import postcss from 'gulp-postcss'
+import autoprefixer from 'autoprefixer'
+import cssnano from 'cssnano'
+import locals from './site.config.js'
 
-// gulp
-const { src, dest, series, parallel, watch } = require('gulp')
+const { src, dest, series, parallel, watch } = gulp
 
-// gulp plugins
-const pug                 = require('gulp-pug')
-const sass                = require('gulp-sass')(require('sass'))
-const data                = require('gulp-data')
-const concat              = require('gulp-concat')
-const rename              = require('gulp-rename')
-const replace             = require('gulp-replace')
-const xml2json            = require('gulp-xml2json')
-const cleanCSS            = require('gulp-clean-css')
-const sourcemaps          = require('gulp-sourcemaps')
-const urlBuilder          = require('gulp-url-builder')
-const jsonFormat          = require('gulp-json-format')
-const jsonMinify          = require('gulp-json-minify')
-const autoprefixer        = require('gulp-autoprefixer')
-const htmlbeautify        = require('gulp-html-beautify')
-const sassExtendShorthand = require('gulp-sass-extend-shorthand')
+const sass = gulpSass(dartSass)
+const bs = browserSync.create()
 
-// helpers
-const paths = (base, folders) => folders.map(folder => base + '/' + folder)
-const date = () => new Date().toISOString().slice(0, 10)
-
-// variables
-const destination = 'docs'
-const pugIndex = paths('src/pug', ['mixins'])
-const sassIndex = paths('src/scss', [])
-const locals = {
-  root: 'https://example.com/',
-  lastmod: date()
-}
-
-// json
-function jsonCompile() {
-  return src([
-    'src/json/**/*.pug'
-  ]).pipe( pug({ locals }) )
-    .pipe( rename((path) => { path.extname = '.xml' }) )
-    .pipe( xml2json({
-      explicitRoot: false,
-      explicitArray: false,
-      ignoreAttrs: true
-    }))
-    .pipe( jsonFormat(2) )
-    .pipe( replace(/(^\s*")at-/gm, '$1@') )
-    .pipe( jsonMinify() )
-    .pipe( replace(/^{"entity":/g, '') )
-    .pipe( replace(/}$/g, '') )
-    .pipe( rename((path) => { path.basename = path.basename.split('.')[0], path.extname = '.min.json' }) )
-    .pipe( dest('src/json') )
-    .pipe( jsonFormat(2) )
-    .pipe( rename((path) => { path.basename = path.basename.split('.')[0] }) )
-    .pipe( dest('src/json') )
-}
-function jsonWatch(cb) {
-  watch(['src/json/**/*.pug', 'scr/pug/mixins/**/*.pug'], series(pugIndexer, jsonCompile))
-  cb()
+const paths = {
+  pug: {
+    src: 'src/pug/views/**/*.pug',
+    dest: 'docs'
+  },
+  sass: {
+    partials: 'src/sass/partials/**/*.scss',
+    transients: 'src/sass/transients',
+    watch: ['src/sass/**/*.scss', '!src/sass/transients/**'],
+    src: ['src/sass/**/*.scss', '!src/sass/**/_*.*', '!src/sass/**/%*.*', '!src/sass/**/old.scss'],
+    dest: 'docs/css'
+  },
+  js: {
+    src: 'src/js/index.js',
+    dest: 'docs/js'
+  },
+  images: {
+    src: 'src/images/**/*',
+    dest: 'docs/images'
+  }
 }
 
-// pug
-function pugIndexer(cb) {
-  pugIndex.forEach(path => indexer(path, 'pug'))
-  cb()
-}
-function pugCompile() {
-  return src([
-    'src/pug/views/**/*.pug'
-  ]).pipe( pug({ locals }) )
-    .pipe( htmlbeautify({ indent_size: 2, content_unformatted: ['script'] }) )
-    .pipe( urlBuilder() )
-    .pipe( dest(destination) )
-    .pipe( bsync.reload({ stream: true }) )
-}
-function pugWatch(cb) {
-  watch(['src/pug/**/*.pug', '!**/_index.*'], series(pugIndexer, pugCompile))
-  cb()
-}
+// Preprocess Pug files to compile block json into inline JSON-LD
+function preprocessJsonBlocks() {
+  const parser = new XMLParser({
+    ignoreAttributes: true,
+    ignoreDeclaration: true
+  })
 
-// sass
-function sassIndexer(cb) {
-  sassIndex.forEach((dir) =>  indexer(dir, 'scss'))
-  cb()
-}
-function sassShorthand() {
-  return src([
-    'src/scss/**/%*.+(sass|scss|css)'
-  ]).pipe( sassExtendShorthand() )
-    .pipe( rename(function(path) {
-      path.basename = path.basename.replace('%','_')
-    }) )
-    .pipe( dest(file => file.base) )
-}
-function sassCompile() {
-  return src([
-    'src/scss/**/*.+(sass|scss|css)',
-    '!src/scss/**/_*.*',
-    '!src/scss/**/%*.*'
-  ]).pipe( sass({ includePaths: ['node_modules'] }) )
-    .pipe( autoprefixer() )
-    .pipe( dest(`${destination}/css`) )
-    .pipe( cleanCSS() )
-    .pipe( rename((path) => { path.extname = '.min.css' }) )
-    .pipe( dest(`${destination}/css`) )
-    .pipe( bsync.reload({ stream: true }) )
-}
-function sassWatch(cb) {
-  watch([
-    'src/scss/**/%*.*'
-  ], series(sassShorthand))
-  watch([
-    'src/scss/**/*.+(sass|scss)',
-    '!src/scss/**/%*.*',
-    '!src/scss/**/_index.*'
-  ], series(sassIndexer, sassCompile))
-  cb()
-}
+  return new Transform({
+    objectMode: true,
+    transform(file, encoding, callback) {
+      try {
+        const content = file.contents.toString()
 
-// javascript
-function jsBundle() {
-  return src('src/js/app.js')
-    .pipe( webpack({ mode: 'development' }) )
-    .pipe( rename({ basename: 'app' }) )
-    .pipe( dest(`${destination}/js`) )
-    .pipe( bsync.reload({ stream: true }) )
-}
-function jsWatch(cb) {
-  watch('src/js/**/*.js', jsBundle)
-  cb()
-}
+        // Check if file has block json
+        if (!/(?:block|append|prepend)\s+json/.test(content)) {
+          callback(null, file)
+          return
+        }
 
-// browsersync
-function sync() {
-  bsync.init({
-    server: {
-      baseDir: `./${destination}`
+        // Extract all include statements
+        const includes = []
+        const includeRegex = /^(\s*)include\s+(.+)$/gm
+        let match
+        while ((match = includeRegex.exec(content)) !== null) {
+          includes.push(match[0])
+        }
+
+        // Extract all top-level variable declarations
+        const variables = []
+        const varRegex = /^-\s+(var|const|let)\s+.+$/gm
+        while ((match = varRegex.exec(content)) !== null) {
+          variables.push(match[0])
+        }
+
+        // Extract variables from block variables (if it exists)
+        const lines = content.split('\n')
+        const variablesBlockRegex = /^(\s*)((?:block|append|prepend)\s+variables)\s*$/
+
+        for (let i = 0; i < lines.length; i++) {
+          const match = lines[i].match(variablesBlockRegex)
+          if (match) {
+            const blockIndent = match[1]
+            const expectedIndent = blockIndent + '  '
+
+            // Extract content lines from block variables
+            for (let j = i + 1; j < lines.length; j++) {
+              const line = lines[j]
+              if (line.trim() === '') continue
+              if (!line.startsWith(expectedIndent)) break
+              variables.push(line.substring(expectedIndent.length))
+            }
+            break
+          }
+        }
+
+        // Parse line by line to find block json
+        const blockRegex = /^(\s*)((?:block|append|prepend)\s+json)\s*$/
+
+        let blockStartIdx = -1
+        let blockIndent = ''
+        let blockDeclaration = ''
+
+        for (let i = 0; i < lines.length; i++) {
+          const match = lines[i].match(blockRegex)
+          if (match) {
+            blockStartIdx = i
+            blockIndent = match[1]
+            blockDeclaration = match[2]
+            break
+          }
+        }
+
+        if (blockStartIdx === -1) {
+          callback(null, file)
+          return
+        }
+
+        // Extract content lines that are indented more than the block declaration
+        const contentLines = []
+        const expectedIndent = blockIndent + '  '
+        let blockEndIdx = blockStartIdx
+
+        for (let i = blockStartIdx + 1; i < lines.length; i++) {
+          const line = lines[i]
+          if (line.trim() === '') {
+            blockEndIdx = i
+            continue
+          }
+          if (!line.startsWith(expectedIndent)) break
+          contentLines.push(line.substring(expectedIndent.length))
+          blockEndIdx = i
+        }
+
+        if (contentLines.length === 0) {
+          callback(null, file)
+          return
+        }
+
+        // Build temporary Pug for compilation
+        const tempPug = [
+          ...includes,
+          ...variables,
+          '',
+          'doctype xml',
+          'root',
+          '  entity',
+          ...contentLines.map(line => '    ' + line)
+        ].join('\n')
+
+        // Compile to XML
+        const fileDir = dirname(file.path)
+        const compiledXml = pugCompiler.compile(tempPug, { filename: file.path, basedir: fileDir })(locals)
+
+        // Parse XML to JSON
+        const json = parser.parse(compiledXml)
+        const entity = json.root.entity || json.root
+
+        // Replace at- with @
+        let jsonString = JSON.stringify(entity)
+        jsonString = jsonString.replace(/"at-/g, '"@')
+
+        // Build replacement - the block declaration followed by piped JSON
+        const replacementLines = [
+          `${blockIndent}${blockDeclaration}`,
+          `${blockIndent}  | ${jsonString}`
+        ]
+
+        // Replace the block in the original content
+        const newLines = [
+          ...lines.slice(0, blockStartIdx),
+          ...replacementLines,
+          ...lines.slice(blockEndIdx + 1)
+        ]
+
+        file.contents = Buffer.from(newLines.join('\n'))
+        callback(null, file)
+      } catch (err) {
+        callback(err)
+      }
     }
   })
 }
 
-// meta
-function sitemapCompile() {
-  return src([
-    'src/meta/sitemap.pug'
-  ]).pipe( pug({ locals, pretty: true }) )
-    .pipe( rename((path) => { path.extname = '.xml' }) )
-    .pipe( dest(destination) )
+// Compile Pug to HTML
+export function compilePug() {
+  return src(paths.pug.src)
+    .pipe(preprocessJsonBlocks())
+    .pipe(gulpPug({
+      locals: locals,
+      pretty: true
+    }))
+    .pipe(urlBuilder())
+    .pipe(dest(paths.pug.dest))
+    .pipe(bs.reload({ stream: true }))
 }
-function robotsCompile() {
-  return src([
-    'src/meta/robots.txt'
-  ]).pipe( replace(/https:\/\/root\//gm, locals.root) )
-    .pipe( dest(destination) )
+
+// Wrap file contents in a Sass mixin so transients can be @use'd
+function wrapInMixin() {
+  return new Transform({
+    objectMode: true,
+    transform(file, encoding, callback) {
+      const content = file.contents.toString()
+      const indented = content.split('\n').map(line => line ? '  ' + line : line).join('\n')
+      file.contents = Buffer.from(`@mixin styles {\n${indented}\n}\n`)
+      callback(null, file)
+    }
+  })
 }
-function faviconCompile() {
-  return src([
-    'src/meta/favicon.pug'
-  ]).pipe( pug({ doctype: 'xml', pretty: true }) )
-    .pipe( rename((path) => { path.extname = '.svg' }) )
-    .pipe( dest(destination) )
+
+// Convert Sass shorthand to longhand
+export function sassShorthand() {
+  return src(paths.sass.partials)
+    .pipe( sassExtendShorthand() )
+    .pipe( wrapInMixin() )
+    .pipe( rename(function(path) {
+      path.basename = path.basename.replace('%','_')
+    }) )
+    .pipe( dest(paths.sass.transients) )
 }
-function metaWatch(cb) {
-  watch('src/meta/*.*', series(sitemapCompile, robotsCompile, faviconCompile))
+
+// Compile Sass to CSS
+export function compileSass() {
+  return src(paths.sass.src)
+    .pipe(sass.sync().on('error', sass.logError))
+    .pipe(postcss([ autoprefixer() ]))
+    .pipe(dest(paths.sass.dest))
+    .pipe(bs.stream())
+    .pipe(postcss([ cssnano() ]))
+    .pipe(rename({ suffix: '.min' }))
+    .pipe(dest(paths.sass.dest))
+}
+
+// Bundle JavaScript with esbuild
+export async function bundleJs() {
+  await esbuild.build({
+    entryPoints: ['src/js/index.js'],
+    bundle: true,
+    minify: true,
+    sourcemap: true,
+    outfile: 'docs/js/bundle.js',
+    format: 'iife'
+  })
+  bs.reload()
+}
+
+// Copy images to docs
+export function copyImages() {
+  return src(paths.images.src)
+    .pipe(dest(paths.images.dest))
+}
+
+// Start BrowserSync server
+export function serve(cb) {
+  bs.init({
+    server: {
+      baseDir: 'docs'
+    },
+    port: 3000,
+    notify: false
+  })
   cb()
 }
 
-// exports
-exports.meta    = series(sitemapCompile, robotsCompile, faviconCompile)
-exports.json    = jsonCompile
-exports.pug     = series(jsonCompile, pugIndexer, pugCompile)
-exports.sass    = series(sassShorthand, sassIndexer, sassCompile)
-exports.js      = jsBundle
-exports.build   = parallel(exports.meta, exports.json, exports.pug, exports.sass)
-exports.watch   = series(metaWatch, jsonWatch, pugWatch, sassWatch, jsWatch)
-exports.default = series(exports.build, exports.watch, sync)
+// Watch files for changes
+function watchFiles(cb) {
+  watch(['src/pug/**/*.pug'], series(compilePug))
+  watch(paths.sass.watch, series(sassShorthand, compileSass))
+  watch(['src/js/**/*.js'], series(bundleJs))
+  watch([paths.images.src], series(copyImages))
+  cb()
+}
+
+// Default build task
+export const build = parallel(
+  compilePug,
+  series(sassShorthand, compileSass),
+  bundleJs,
+  copyImages
+)
+
+// Development task with server and watch
+export const dev = series(build, serve, watchFiles)
+
+// Default task
+export { build as default }
