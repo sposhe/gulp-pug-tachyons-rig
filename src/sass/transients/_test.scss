@@ -1,0 +1,5 @@
+@mixin styles {
+  body {
+    @extend %pa6;
+  }
+}

@@ -1,10 +1,16 @@
 @use 'sass:map';
 
-@import 'vendor/_normalize';
-@import 'vendor/_tachyons-static';
+@use 'boilerplate/normalize';
+@use 'utilities/tachyons-static';
+
+@use 'utilities/tachyons-responsive';
+@use 'utilities/custom-responsive';
+
+@use 'transients/test';
 
 $breakpoints: ('-ns': 768, '-l': 1024, '-xl': 1350);
 
+@mixin mo { @media screen and (max-width: #{map.get($breakpoints, '-ns') - 1}px) { @content; } }
 @mixin ns { @media screen and (min-width: #{map.get($breakpoints, '-ns')}px) { @content; } }
 @mixin l  { @media screen and (min-width: #{map.get($breakpoints, '-l')}px)  { @content; } }
 @mixin xl { @media screen and (min-width: #{map.get($breakpoints, '-xl')}px) { @content; } }
@@ -19,9 +25,9 @@ $breakpoints: ('-ns': 768, '-l': 1024, '-xl': 1350);
 }
 
 @include suffixer using ($s) {
-  @import 'vendor/_tachyons-responsive';
-  @import 'partials/_custom-responsive';
+  @include tachyons-responsive.generate($s);
+  @include custom-responsive.generate($s);
 }
 
-@import 'partials/_custom-static';
-@import 'partials/_main';
+@include test.styles;
+

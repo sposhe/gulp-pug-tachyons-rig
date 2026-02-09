@@ -1,0 +1,30 @@
+doctype html
+html(lang='en')
+  block variables
+  head
+    block head
+      block meta
+        //- boilerplate
+        meta(charset='UTF-8')
+        meta(name='viewport' content='width=device-width, initial-scale=1.0')
+        //- title
+        title= title
+        //- boilerplate
+        meta(name='description' content= description)
+        //- opengraph
+        - const og = { type, title, url, site_name, image, 'image:width': imageWidth, 'image:height': imageHeight, 'image:alt': imageAlt, locale }
+        - for (const [property, content] of Object.entries(og))
+          - if (undefined !== content && '' !== content)
+            meta(property= 'og:' + property, content= content)
+        link(rel='canonical', href= url)
+      block styles
+        link(rel='stylesheet' href='/css/styles.css')
+      block scripts
+      script(type='application/ld+json')
+        block json
+  body
+    block body
+      block header
+      block content
+      block footer
+      script(src='/js/bundle.js')
