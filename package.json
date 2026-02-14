@@ -1,0 +1,35 @@
+{
+  "name": "gulp-pug-tachyons-rig",
+  "version": "0.2.1",
+  "description": "Template for quickly creating static sites that compile locally with Pug, Sass, Tachyons, with custom and opinionated Gulp tasks with add-ons.",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sposhe/gulp-pug-tachyons-rig.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sposhe/gulp-pug-tachyons-rig/issues"
+  },
+  "homepage": "https://github.com/sposhe/gulp-pug-tachyons-rig#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.24",
+    "browser-sync": "^3.0.4",
+    "cssnano": "^7.1.2",
+    "esbuild": "^0.27.2",
+    "fast-xml-parser": "^5.3.4",
+    "gulp": "^5.0.1",
+    "gulp-postcss": "^10.0.0",
+    "gulp-pug": "^5.0.0",
+    "gulp-rename": "^2.1.0",
+    "gulp-sass": "^6.0.1",
+    "gulp-sass-extend-shorthand": "^1.0.3",
+    "gulp-url-builder": "^1.0.1",
+    "pug": "^3.0.3",
+    "sass": "^1.97.3"
+  }
+}

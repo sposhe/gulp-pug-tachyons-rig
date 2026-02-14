@@ -4,7 +4,7 @@ logs
 pids
 *.pid
 *.seed
-*.json
+package-lock.json
 lib-cov
 coverage
 .grunt
